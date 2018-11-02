@@ -22,6 +22,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var mainList:ListView
     var mainAdapter: MainAdapter? = null
     var dataContact:List<DataContactModel>? = ArrayList()
+    lateinit var service:ApiInterface
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,7 +31,7 @@ class MainActivity : AppCompatActivity() {
 
         mainList = findViewById(R.id.mainList)
 
-        val service = ApiService.retrofitInstance.create(ApiInterface::class.java)
+        service = ApiService.retrofitInstance.create(ApiInterface::class.java)
 
         val call = service.allContact
         call.enqueue(object : Callback<ContactModel> {
@@ -61,4 +62,23 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        val call = service.allContact
+        call.enqueue(object : Callback<ContactModel> {
+            override fun onResponse(call: Call<ContactModel>, response: Response<ContactModel>) {
+
+                if(response.code() == 200){
+                    dataContact = response.body()?.data
+                    mainAdapter = MainAdapter(this@MainActivity, dataContact)
+                    mainList.adapter = mainAdapter
+                }
+
+            }
+
+            override fun onFailure(call: Call<ContactModel>, t: Throwable) {
+                Toast.makeText(this@MainActivity, "Something went wrong...Please try later!", Toast.LENGTH_SHORT).show()
+            }
+        })
+    }
 }
